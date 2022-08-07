@@ -49,6 +49,7 @@ func load_scene_with_interactive(path, print_to_console = true):
 
 func __load_scene_interactive(data, task): # handels polling and scene switching
 	if OS.can_use_threads(): # double check if platform supports aysnc (no fallback if it failes)
+		wait.lock()
 		var loader = ResourceLoader.load_interactive(data[0])
 		var path = data[0]
 		var print_to_console = data[1]
@@ -86,4 +87,5 @@ func __load_scene_interactive(data, task): # handels polling and scene switching
 				break
 		loader = null
 		data = null
+		wait.unlock()
 		yield(get_tree(),"idle_frame") # makes it possible to see end result

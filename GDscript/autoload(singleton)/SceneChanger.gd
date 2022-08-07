@@ -7,6 +7,7 @@ extends Node
 export var max_load_time = 10000
 var thread = Thread.new() # makes new thread
 var can_async:bool = ["Windows", "OSX", "UWP", "X11"].has(OS.get_name())
+var autoload_names:Array = ["SceneChanger"]
 
 func start_load(path): # example use: SceneChanger.start_load("res://levels/level1.tscn",self)
 	if can_async:
@@ -34,7 +35,7 @@ func goto_scene(data): # handels polling and scene switching
 				var resource = loader.get_resource().instance()
 				get_tree().get_root().add_child_below_node(get_tree().get_root(),resource)
 				for child in get_tree().get_root().get_children(): # gets children of root and queue_free() them if they are not a singleton
-					if Globals.autoload_names.has(child.get_name()): # checks if the childs name is valid for exclusion from queue_free() by looking up its name and seeing if it exist in Globals.autoload_names
+					if autoload_names.has(child.get_name()): # checks if the childs name is valid for exclusion from queue_free() by looking up its name and seeing if it exist in Globals.autoload_names
 						pass
 					elif child == resource:
 						pass
@@ -47,20 +48,6 @@ func goto_scene(data): # handels polling and scene switching
 				#Still loading
 				var progress = float(loader.get_stage())/loader.get_stage_count()
 				print(path.get_file()," is at %",progress * 100," completion!")
-			else:
-				print("Error while loading file") # if err isn't ERR_FILE_EOF(completed) or OK(still loading) the something Is preventing the file from loading
-				break
-			yield(get_tree(),"idle_frame") # makes it possible to see end result
-
-				thread.wait_to_finish()
-				break
-			elif err == OK:
-				#Still loading
-				var progress = float(loader.get_stage())/loader.get_stage_count()
-				if doloadingbar:
-					loading_bar.loading.value = progress * 100 # change loading_bar.progress to loading_bar.(the % update function you have)
-				else:
-					print(path.get_file()," is at %",progress * 100," completion!")
 			else:
 				print("Error while loading file") # if err isn't ERR_FILE_EOF(completed) or OK(still loading) the something Is preventing the file from loading
 				break

@@ -51,4 +51,4 @@ func goto_scene(data): # handels polling and scene switching
 			else:
 				print("Error while loading file") # if err isn't ERR_FILE_EOF(completed) or OK(still loading) the something Is preventing the file from loading
 				break
-			yield(get_tree(),"idle_frame") # makes it possible to see end result
+		yield(get_tree(),"idle_frame") # makes it possible to see end result

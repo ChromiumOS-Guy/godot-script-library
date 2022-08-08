@@ -1,0 +1,15 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://ThreadPool/loading_screen_example/loading_screen_example.gd" type="Script" id=1]
+
+[node name="loading_Screen" type="ProgressBar"]
+anchor_top = 0.5
+anchor_right = 1.0
+anchor_bottom = 0.5
+margin_top = -7.0
+margin_bottom = 7.0
+max_value = 1000.0
+script = ExtResource( 1 )
+scene_file_path = "res://fat scene.tscn"
+
+[node name="Tween" type="Tween" parent="."]

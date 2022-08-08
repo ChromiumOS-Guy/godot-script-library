@@ -15,18 +15,18 @@ var __tasks_lock: Mutex = Mutex.new()
 var __tasks_wait: Semaphore = Semaphore.new()
 var __thread_count = 0
 
-onready var __pool = __create_pool()
+onready var __pool = __create_pool() # creates pool when ready (remove onready if you plan to use this class standalone)
 
-func _notification(what: int):
+func _notification(what: int): # when exiting game this will activate 
 	if what == NOTIFICATION_PREDELETE:
 		__wait_for_shutdown()
 
 
-func queue_free() -> void:
+func queue_free() -> void: # will shutdown the thread pool
 	shutdown()
 	.queue_free()
 
-
+# all submit functions
 func submit_task(instance: Object, method: String, parameter, task_tag = null) -> Future:
 	return __enqueue_task(instance, method, parameter, task_tag, false, false, false)
 
@@ -36,11 +36,19 @@ func submit_task_as_parameter(instance: Object, method: String, parameter, task_
 func submit_task_unparameterized(instance: Object, method: String, task_tag = null) -> Future:
 	return __enqueue_task(instance, method, null, task_tag, true, false, false)
 
+func submit_task_as_only_parameter(instance: Object, method: String, task_tag = null) -> Future:
+	return __enqueue_task(instance, method, null, task_tag, true, false, true)
 
 func submit_task_array_parameterized(instance: Object, method: String, parameter: Array, task_tag = null) -> Future:
 	return __enqueue_task(instance, method, parameter, task_tag, false, true, false)
 
+func submit_task_unparameterized_if_no_parameter(instance: Object, method: String, parameter = null, task_tag = null) -> Future:
+	if parameter == null:
+		return __enqueue_task(instance, method, null, task_tag, true, false, false)
+	else:
+		return __enqueue_task(instance, method, parameter, task_tag, false, false, false)
 
+# the shutdown method
 func shutdown():
 	__finished = true
 	__tasks_lock.lock()
@@ -54,11 +62,11 @@ func shutdown():
 	__tasks_lock.unlock()
 
 
-func do_nothing(arg) -> void:
+func do_nothing(arg) -> void: # fallback if something fails and a task is executed when no task exists
 	#print("doing nothing")
 	OS.delay_msec(1) # if there is nothing to do, go sleep
 
-
+# the main task queueing function
 func __enqueue_task(instance: Object, method: String, parameter = null, task_tag = null, no_argument = false, array_argument = false, task_as_argument = false) -> Future:
 	var result = Future.new(instance, method, parameter, task_tag, no_argument, array_argument,task_as_argument, self) 
 	if __finished:
@@ -72,27 +80,27 @@ func __enqueue_task(instance: Object, method: String, parameter = null, task_tag
 	return result
 
 
-func __wait_for_shutdown():
+func __wait_for_shutdown(): # activates shutdown after all thread finished
 	shutdown()
 	for t in __pool:
 		if t.is_active():
 			t.wait_to_finish()
 
-func __create_pool():
+func __create_pool(): # creates the pool
 	var result = []
 	for c in range(OS.get_processor_count() if __thread_count == 0 else __thread_count):
 		result.append(Thread.new())
 	return result
 
 
-func __start() -> void:
+func __start() -> void: # starts the threads in the pool in the __execute_tasks method
 	if not __started:
 		for t in __pool:
 			if !(t as Thread).is_active():
 				(t as Thread).start(self, "__execute_tasks", t)
 		__started = true
 
-func __drain_this_task(task: Future) -> Future:
+func __drain_this_task(task: Future) -> Future: # while not used is highly useful if you need a specifc task
 	__tasks_lock.lock()
 	if __tasks.empty():
 		__tasks_lock.unlock()
@@ -120,7 +128,7 @@ func __drain_task() -> Future:
 	__tasks_lock.unlock()
 	return result;
 
-
+# the main threads loop
 func __execute_tasks(arg_thread) -> void:
 	#print_debug(arg_thread)
 	while not __finished:
@@ -130,7 +138,7 @@ func __execute_tasks(arg_thread) -> void:
 		var task: Future = __drain_task()
 		__execute_this_task(task)
 
-
+# secondary main threads function for executing a task
 func __execute_this_task(task: Future) -> void:
 	if task.cancelled:
 		task.__finish()
@@ -142,7 +150,7 @@ func __execute_this_task(task: Future) -> void:
 		if not (task.tag is Future):# tasks tagged this way are considered hidden
 			call_deferred("emit_signal", "task_completed", task)
 
-class Future:
+class Future: # the Future(task) object (basiclly a task template)
 	var target_instance: Object
 	var target_method: String
 	var target_argument
@@ -159,6 +167,7 @@ class Future:
 	var __wait: Semaphore
 	var __pool: FutureThreadPool
 
+	#initialization of a task: Future.new()
 	func _init(instance: Object, method: String, parameter, task_tag, no_argument: bool, array_argument: bool,task_as_argument: bool , pool: FutureThreadPool):
 		target_instance = instance
 		target_method = method
@@ -176,22 +185,24 @@ class Future:
 		__pool = pool
 
 
-	func cancel() -> void:
+	func cancel() -> void: # if task is cancelled
 		cancelled = true
 
 
-	func wait_for_result() -> void:
+	func wait_for_result() -> void: # does what is says
 		if not finished:
 			__verify_task_execution()
 
 
-	func get_result():
+	func get_result(): # goes and gets result
 		wait_for_result()
 		return result
 
 
-	func __execute_task():
-		if __no_argument:
+	func __execute_task(): # sorts call cases and calls upon them when needed
+		if __no_argument and __task_as_argument:
+			result = target_instance.call(target_method , self)
+		elif __no_argument:
 			result = target_instance.call(target_method)
 		elif __array_argument:
 			result = target_instance.callv(target_method, target_argument)
@@ -202,7 +213,7 @@ class Future:
 		__wait.post()
 
 
-	func __verify_task_execution() -> void:
+	func __verify_task_execution() -> void: # verifies that the task has been executed
 		__lock.lock()
 		if not finished:
 			var task: Future = null
@@ -215,6 +226,6 @@ class Future:
 		__lock.unlock()
 
 
-	func __finish():
+	func __finish(): # finalizes the task for deletion
 		finished = true
 		__pool = null

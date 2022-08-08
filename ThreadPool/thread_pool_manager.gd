@@ -33,9 +33,14 @@ func submit_task_as_parameter(instance: Object, method: String, parameter, task_
 func submit_task_unparameterized(instance: Object, method: String, task_tag = null):
 	return pool.submit_task_unparameterized(instance, method, task_tag)
 
-
 func submit_task_array_parameterized(instance: Object, method: String, parameter: Array, task_tag = null):
 	return pool.submit_task_array_parameterized(instance, method, parameter, task_tag)
+
+func submit_task_as_only_parameter(instance: Object, method: String, task_tag = null):
+	return pool.submit_task_as_only_parameter(instance, method, task_tag)
+
+func submit_task_unparameterized_if_no_parameter(instance: Object, method: String, parameter = null, task_tag = null):
+	return pool.submit_task_unparameterized_if_no_parameter(instance, method, parameter, task_tag)
 
 func load_scene_with_interactive(path, print_to_console = true):
 	if path.get_extension() == "":

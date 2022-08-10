@@ -24,7 +24,7 @@ normal functions:
 
 submit_task(instance: Object, method: String, parameter,task_tag = null ,time_limit : float = task_time_limit) # submit tasks like normal
 
-submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null, time_limit : float = task_time_limit) # like submit_task() but gives the selected method the task as self allowing said method to change things about its task
+submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null, time_limit : float = task_time_limit) # like submit_task() but gives the selected method the task as self allowing said method to change things about its task example: said_method(userdata, task)
 
 submit_task_unparameterized(instance: Object, method: String, task_tag = null, time_limit : float = task_time_limit) # like submit_task() but without any parameters
 

@@ -9,12 +9,14 @@ signal task_completed(task)
 export var use_signals: bool = false
 
 var __tasks: Array = []
+var __pending: Array = []
 var __started = false
 var __finished = false
 var __tasks_lock: Mutex = Mutex.new()
 var __tasks_wait: Semaphore = Semaphore.new()
 var __thread_count = 0
 
+onready var no_timer_thread: bool = false
 onready var __pool = __create_pool() # creates pool when ready (remove onready if you plan to use this class standalone)
 
 func _notification(what: int): # when exiting game this will activate 
@@ -27,26 +29,26 @@ func queue_free() -> void: # will shutdown the thread pool
 	.queue_free()
 
 # all submit functions
-func submit_task(instance: Object, method: String, parameter, task_tag = null) -> Future:
-	return __enqueue_task(instance, method, parameter, task_tag, false, false, false)
+func submit_task(instance: Object, method: String, parameter ,task_tag = null, time_limit: float = 0) -> Future:
+	return __enqueue_task(instance, method, parameter, task_tag, false, false, false , time_limit)
 
-func submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null) -> Future:
-	return __enqueue_task(instance, method, parameter, task_tag, false, false, true)
+func submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null , time_limit: float = 0) -> Future:
+	return __enqueue_task(instance, method, parameter, task_tag, false, false, true, time_limit)
 
-func submit_task_unparameterized(instance: Object, method: String, task_tag = null) -> Future:
-	return __enqueue_task(instance, method, null, task_tag, true, false, false)
+func submit_task_unparameterized(instance: Object, method: String, task_tag = null , time_limit: float = 0) -> Future:
+	return __enqueue_task(instance, method, null,  task_tag, true, false, false, time_limit)
 
-func submit_task_as_only_parameter(instance: Object, method: String, task_tag = null) -> Future:
-	return __enqueue_task(instance, method, null, task_tag, true, false, true)
+func submit_task_as_only_parameter(instance: Object, method: String,task_tag = null, time_limit: float = 0) -> Future:
+	return __enqueue_task(instance, method, null, task_tag, true, false, true, time_limit)
 
-func submit_task_array_parameterized(instance: Object, method: String, parameter: Array, task_tag = null) -> Future:
-	return __enqueue_task(instance, method, parameter, task_tag, false, true, false)
+func submit_task_array_parameterized(instance: Object, method: String, parameter: Array,task_tag = null, time_limit: float = 0) -> Future:
+	return __enqueue_task(instance, method, parameter,  task_tag, false, true, false, time_limit)
 
-func submit_task_unparameterized_if_no_parameter(instance: Object, method: String, parameter = null, task_tag = null) -> Future:
+func submit_task_unparameterized_if_no_parameter(instance: Object, method: String, parameter = null,task_tag = null, time_limit: float = 0) -> Future:
 	if parameter == null:
-		return __enqueue_task(instance, method, null, task_tag, true, false, false)
+		return __enqueue_task(instance, method, null, task_tag, true, false, false, time_limit)
 	else:
-		return __enqueue_task(instance, method, parameter, task_tag, false, false, false)
+		return __enqueue_task(instance, method, parameter,task_tag, false, false, false, time_limit)
 
 # the shutdown method
 func shutdown():
@@ -67,8 +69,8 @@ func do_nothing(arg) -> void: # fallback if something fails and a task is execut
 	OS.delay_msec(1) # if there is nothing to do, go sleep
 
 # the main task queueing function
-func __enqueue_task(instance: Object, method: String, parameter = null, task_tag = null, no_argument = false, array_argument = false, task_as_argument = false) -> Future:
-	var result = Future.new(instance, method, parameter, task_tag, no_argument, array_argument,task_as_argument, self) 
+func __enqueue_task(instance: Object, method: String, parameter = null ,task_tag = null, no_argument = false, array_argument = false, task_as_argument = false, time_limit: float = 0) -> Future:
+	var result = Future.new(instance, method, parameter ,task_tag, no_argument, array_argument,task_as_argument, time_limit,self) 
 	if __finished:
 		result.__finish()
 		return result
@@ -95,9 +97,17 @@ func __create_pool(): # creates the pool
 
 func __start() -> void: # starts the threads in the pool in the __execute_tasks method
 	if not __started:
+		var thread_number = 1
 		for t in __pool:
 			if !(t as Thread).is_active():
-				(t as Thread).start(self, "__execute_tasks", t)
+				if thread_number != OS.get_processor_count() if __thread_count == 0 else __thread_count:
+					(t as Thread).start(self, "__execute_tasks", t)
+				else:
+					if no_timer_thread:
+						(t as Thread).start(self, "__execute_tasks", t)
+					else:
+						(t as Thread).start(self, "__timer_thread", t)
+				thread_number += 1
 		__started = true
 
 func __drain_this_task(task: Future) -> Future: # while not used is highly useful if you need a specifc task
@@ -121,10 +131,11 @@ func __drain_task() -> Future:
 	__tasks_lock.lock()
 	var result
 	if __tasks.empty():
-		result = Future.new(self, "do_nothing", null, null, true, false,false, self)# normally, this is not expected, but better safe than sorry
+		result = Future.new(self, "do_nothing", null,null, true, false,false ,0,self)# normally, this is not expected, but better safe than sorry
 		result.tag = result
 	else:
 		result = __tasks.pop_back()
+		__pending.append(result)
 	__tasks_lock.unlock()
 	return result;
 
@@ -132,6 +143,7 @@ func __drain_task() -> Future:
 func __execute_tasks(arg_thread) -> void:
 	#print_debug(arg_thread)
 	while not __finished:
+		#print("Thread: (",OS.get_thread_caller_id(),") is wating for a job")
 		__tasks_wait.wait()
 		if __finished:
 			return
@@ -140,15 +152,45 @@ func __execute_tasks(arg_thread) -> void:
 
 # secondary main threads function for executing a task
 func __execute_this_task(task: Future) -> void:
+	#print("Thread: (",OS.get_thread_caller_id(),") is doing job: (",task.tag,")")
 	if task.cancelled:
 		task.__finish()
+		__pending.remove(__pending.find(task))
 		return
 	task.__execute_task()
 	task.completed = true
+	OS.delay_msec(10) # precation to let timer thread catch up
 	task.__finish()
 	if use_signals:
 		if not (task.tag is Future):# tasks tagged this way are considered hidden
 			call_deferred("emit_signal", "task_completed", task)
+
+#timer thread main loop cancelles tasks that exceed there time limit
+func __timer_thread(thread_arg):
+	#print_debug(thread_arg)
+	var smallest_task = null
+	var prev_pending = []
+	while not __finished:
+		if __finished:
+			return
+		if prev_pending != __pending:
+			if __pending != []:
+				for task in __pending:
+					if task != null:
+						if task.__time_limit != 0:
+							if smallest_task != null:
+								if smallest_task.__time_limit - (OS.get_ticks_msec() - smallest_task.start_time) > task.__time_limit - (OS.get_ticks_msec() - task.start_time):
+									smallest_task = task
+							else:
+								smallest_task = task
+			prev_pending = __pending.duplicate(false)
+		if smallest_task != null:
+			if OS.get_ticks_msec() - smallest_task.start_time > smallest_task.__time_limit:
+				smallest_task.cancel()
+				print_debug("task (",smallest_task,") exceeded time limit therefore it is now cancelled)")
+				smallest_task = null
+		OS.delay_msec(10)
+
 
 class Future: # the Future(task) object (basiclly a task template)
 	var target_instance: Object
@@ -156,6 +198,7 @@ class Future: # the Future(task) object (basiclly a task template)
 	var target_argument
 	var result
 	var progress
+	var start_time: float
 	var tag
 	var cancelled: bool # true if was requested for this future to avoid being executed
 	var completed: bool # true if this future executed completely
@@ -163,12 +206,13 @@ class Future: # the Future(task) object (basiclly a task template)
 	var __no_argument: bool
 	var __array_argument: bool
 	var __task_as_argument: bool
+	var __time_limit: float
 	var __lock: Mutex
 	var __wait: Semaphore
 	var __pool: FutureThreadPool
 
 	#initialization of a task: Future.new()
-	func _init(instance: Object, method: String, parameter, task_tag, no_argument: bool, array_argument: bool,task_as_argument: bool , pool: FutureThreadPool):
+	func _init(instance: Object, method: String, parameter ,task_tag, no_argument: bool, array_argument: bool,task_as_argument: bool ,time_limit: float , pool: FutureThreadPool):
 		target_instance = instance
 		target_method = method
 		target_argument = parameter
@@ -177,6 +221,7 @@ class Future: # the Future(task) object (basiclly a task template)
 		__no_argument = no_argument
 		__array_argument = array_argument
 		__task_as_argument = task_as_argument
+		__time_limit = time_limit
 		cancelled = false
 		completed = false
 		finished = false
@@ -186,6 +231,8 @@ class Future: # the Future(task) object (basiclly a task template)
 
 
 	func cancel() -> void: # if task is cancelled
+		__pool.__pending.remove(__pool.__pending.find(self))
+		__time_limit = 0 # precation
 		cancelled = true
 
 
@@ -201,14 +248,19 @@ class Future: # the Future(task) object (basiclly a task template)
 
 	func __execute_task(): # sorts call cases and calls upon them when needed
 		if __no_argument and __task_as_argument:
+			start_time = OS.get_ticks_msec()
 			result = target_instance.call(target_method , self)
 		elif __no_argument:
+			start_time = OS.get_ticks_msec()
 			result = target_instance.call(target_method)
 		elif __array_argument:
+			start_time = OS.get_ticks_msec()
 			result = target_instance.callv(target_method, target_argument)
 		elif __task_as_argument:
+			start_time = OS.get_ticks_msec()
 			result = target_instance.call(target_method, target_argument, self)
 		else:
+			start_time = OS.get_ticks_msec()
 			result = target_instance.call(target_method, target_argument)
 		__wait.post()
 
@@ -228,4 +280,5 @@ class Future: # the Future(task) object (basiclly a task template)
 
 	func __finish(): # finalizes the task for deletion
 		finished = true
+		__pool.__pending.remove(__pool.__pending.find(self))
 		__pool = null

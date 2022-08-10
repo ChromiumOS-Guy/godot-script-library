@@ -6,10 +6,9 @@ onready var wait = Mutex.new()
 
 
 # setting parameters
-var thread_count = 0
-var max_load_time = 100000
-
-
+var thread_count = 0 # amount of threads in thread pool
+var no_timer_thread:bool = false # note if enabled task_time_limit will not work as it depends on the timer thread to actually cancel tasks
+var task_time_limit:float = 100000 # in milliseconds
 
 # initialization phase
 func _ready():
@@ -18,36 +17,46 @@ func _ready():
 
 func __start_pool():
 	pool.__thread_count = thread_count
+	pool.no_timer_thread = no_timer_thread
 	pool.__pool = pool.__create_pool()
-	
-
-
 
 # post initialization phase
-func submit_task(instance: Object, method: String, parameter, task_tag = null):
-	return pool.submit_task(instance, method, parameter, task_tag)
+func get_task_queue():
+	#print_debug("warning immutable")
+	return pool.__tasks.duplicate(false)
 
-func submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null):
-	return pool.submit_task_as_parameter(instance, method, parameter, task_tag)
+func get_pending_queue():
+	#print_debug("warning immutable")
+	return pool.__pending.duplicate(false)
 
-func submit_task_unparameterized(instance: Object, method: String, task_tag = null):
-	return pool.submit_task_unparameterized(instance, method, task_tag)
+func get_threads(): # should only really be used for debugging
+	#print_debug("warning immutable")
+	return pool.__pool.duplicate(false)
 
-func submit_task_array_parameterized(instance: Object, method: String, parameter: Array, task_tag = null):
-	return pool.submit_task_array_parameterized(instance, method, parameter, task_tag)
+func submit_task(instance: Object, method: String, parameter,task_tag = null ,time_limit : float = task_time_limit):
+	return pool.submit_task(instance, method, parameter,task_tag, time_limit)
 
-func submit_task_as_only_parameter(instance: Object, method: String, task_tag = null):
-	return pool.submit_task_as_only_parameter(instance, method, task_tag)
+func submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null, time_limit : float = task_time_limit):
+	return pool.submit_task_as_parameter(instance, method, parameter ,task_tag, time_limit)
 
-func submit_task_unparameterized_if_no_parameter(instance: Object, method: String, parameter = null, task_tag = null):
-	return pool.submit_task_unparameterized_if_no_parameter(instance, method, parameter, task_tag)
+func submit_task_unparameterized(instance: Object, method: String, task_tag = null, time_limit : float = task_time_limit):
+	return pool.submit_task_unparameterized(instance, method ,task_tag, time_limit)
 
-func load_scene_with_interactive(path, print_to_console = true):
+func submit_task_array_parameterized(instance: Object, method: String, parameter: Array,task_tag = null, time_limit : float = task_time_limit):
+	return pool.submit_task_array_parameterized(instance, method, parameter ,task_tag, time_limit)
+
+func submit_task_as_only_parameter(instance: Object, method: String ,task_tag = null, time_limit : float = task_time_limit):
+	return pool.submit_task_as_only_parameter(instance, method,task_tag, time_limit )
+
+func submit_task_unparameterized_if_no_parameter(instance: Object, method: String, parameter = null, task_tag = null, time_limit : float = task_time_limit):
+	return pool.submit_task_unparameterized_if_no_parameter(instance, method, parameter ,task_tag, time_limit)
+
+func load_scene_with_interactive(path, print_to_console = true, time_limit : float = task_time_limit):
 	if path.get_extension() == "":
 		print("the path provided has no file extension")
 	elif path.get_extension() != "tscn":
 		print("the file provided is not a scene file (.tscn)")
-	return pool.submit_task_as_parameter(self, "__load_scene_interactive", [path, print_to_console] ,path.get_file())
+	return pool.submit_task_as_parameter(self, "__load_scene_interactive",[path, print_to_console] ,path.get_file(), time_limit)
 
 
 # execution phase
@@ -62,9 +71,7 @@ func __load_scene_interactive(data, task): # handels polling and scene switching
 			print("Resource loader unable to load the resource at path")
 			return
 		
-		var t = OS.get_ticks_msec()
-		
-		while OS.get_ticks_msec() - t < max_load_time: # polling / loading selected scene and updating progress for loading bar
+		while (!task.cancelled and !task.completed): # polling / loading selected scene and updating progress for loading bar
 			var err = loader.poll()
 			if err == ERR_FILE_EOF:
 				#Loading Complete

@@ -24,13 +24,13 @@ normal functions:
 
 submit_task(instance: Object, method: String, parameter,task_tag = null ,time_limit : float = task_time_limit) # submit tasks like normal
 
-submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null, time_limit : float = task_time_limit) # like submit_task() but gives the selected method the task as self allowing said method to change things about its task example: said_method(userdata, task)
+submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null, time_limit : float = task_time_limit) # like submit_task() but gives the selected method the task as self allowing said method to change things about its task example: func said_method(userdata, task)
 
 submit_task_unparameterized(instance: Object, method: String, task_tag = null, time_limit : float = task_time_limit) # like submit_task() but without any parameters
 
 submit_task_array_parameterized(instance: Object, method: String, parameter: Array,task_tag = null, time_limit : float = task_time_limit) # like submit_task() but uses callv () instead of call()
 
-submit_task_as_only_parameter(instance: Object, method: String ,task_tag = null, time_limit : float = task_time_limit) # like submit_task_unparameterized() but sends task as only parameter
+submit_task_as_only_parameter(instance: Object, method: String ,task_tag = null, time_limit : float = task_time_limit) # like submit_task_unparameterized() but sends task as only parameter example: func said_method(task)
 
 submit_task_unparameterized_if_no_parameter(instance: Object, method: String, parameter = null, task_tag = null, time_limit : float = task_time_limit) # like submit_task() but if parameter is equal to null it uses submit_task_unparameterized() instead of submit_task()
 

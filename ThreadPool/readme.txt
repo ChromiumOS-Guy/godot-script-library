@@ -14,7 +14,7 @@ ThreadPoolManager.gd functions:
 
 debugging functions:
 
-get_task_queue() # gives you access to the tasks queue in immutable form
+get_task_queue() # gives you access to the task queue in immutable form
 
 get_pending_queue() # gives you access to the pending tasks in immutable form
 

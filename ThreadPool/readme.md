@@ -33,7 +33,7 @@ if turned off it will give the pending queue in mutable form not recommended
 
 # get_threads_as_immutable() should only be used for debugging purposes !!!:
 ```diff
-@@ get_threads_as_immutable(immutable: bool = true)
+= get_threads_as_immutable(immutable: bool = true)
 ```
 if turned off it will give the thread array in mutable form really really not recommended
 DO NOT USE THIS IF YOU DON'T KNOW WHAT YOUR DOING

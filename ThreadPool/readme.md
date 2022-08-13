@@ -26,7 +26,7 @@ normal functions:
 ```diff
 join(identifier, by: String = "task")
 ```
-when called will "block" the thread from doing anything until a task is finished or cancelled, use example 1: join(task) , use example 2: join("the_task_tag","task_tag") # will return err when finished err == "OK" is success , err == "OK_CANCEL" is success but task that has been joind got cancelled
+when called will "block" the thread from doing anything until a task is finished or cancelled, use example 1: join(task) , use example 2: join("the_task_tag","task_tag") # will return err when finished err == "OK" is success , err == "OK_CANCEL" is success but task that has been joined got cancelled
 
 # submit_task():
 ```diff

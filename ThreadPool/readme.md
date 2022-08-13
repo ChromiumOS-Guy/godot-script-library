@@ -21,16 +21,23 @@ ThreadPoolManager.gd functions:
 
 # get_task_queue_as_immutable():
 ```diff
-get_task_queue_as_immutable()
+get_task_queue_as_immutable(immutable: bool = true)
 ```
+if turned off it will give the task queue in mutable form not recommended
+
 # get_pending_queue_as_immutable():
 ```diff
-get_pending_queue_as_immutable()
+get_pending_queue_as_immutable(immutable: bool = true)
 ```
+if turned off it will give the pending queue in mutable form not recommended
+
 # get_threads_as_immutable():
 ```diff
-get_threads_as_immutable()
+get_threads_as_immutable(immutable: bool = true)
 ```
+if turned off it will give the thread array in mutable form really really not recommended
+DO NOT USE THIS IF YOU DON'T KNOW WHAT YOUR DOING
+
 # # normal functions:
 
 # join:

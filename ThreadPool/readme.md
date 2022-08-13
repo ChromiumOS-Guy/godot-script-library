@@ -21,7 +21,7 @@ ThreadPoolManager.gd functions:
 
 # get_task_queue_as_immutable():
 ```diff
--get_task_queue_as_immutable(immutable: bool = true)
+get_task_queue_as_immutable(immutable: bool = true)
 ```
 if turned off it will give the task queue in mutable form not recommended
 

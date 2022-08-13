@@ -22,7 +22,7 @@ get_threads_as_immutable()
 
 normal functions:
 
-join(identifier, by: String = "task") # when called will "block" thread from doing anything until a task is finished or cancelled, use example 1: join(task) , use example 2: join("the_task_tag","task_tag")
+join(identifier, by: String = "task") # when called will "block" thread from doing anything until a task is finished or cancelled, use example 1: join(task) , use example 2: join("the_task_tag","task_tag") # will return err when finished err == "OK" is success , err == "OK_CANCEL" is success but task that has been joind got cancelled
 
 submit_task(instance: Object, method: String, parameter,task_tag : String ,time_limit : float = task_time_limit, priority:int = default_priority) # submit tasks like normal
 

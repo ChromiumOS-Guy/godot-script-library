@@ -21,7 +21,8 @@ get_pending_queue_as_immutable()
 get_threads_as_immutable()
 
 normal functions:
-join:
+
+# join:
 ```diff
 join(identifier, by: String = "task")
 ```
@@ -45,25 +46,25 @@ submit_task_unparameterized(instance: Object, method: String, task_tag : String,
 ```
 like submit_task() but without any parameters
 
-submit_task_array_parameterized():
+# submit_task_array_parameterized():
 ```diff
 submit_task_array_parameterized(instance: Object, method: String, parameter: Array,task_tag : String, time_limit : float = task_time_limit, priority:int = default_priority)
 ```
 like submit_task() but uses callv () instead of call()
 
-submit_task_as_only_parameter():
+# submit_task_as_only_parameter():
 ```diff
 submit_task_as_only_parameter(instance: Object, method: String ,task_tag : String, time_limit : float = task_time_limit, priority:int = default_priority)
 ```
 like submit_task_unparameterized() but sends task as only parameter example: func said_method(task)
 
-submit_task_unparameterized_if_no_parameter():
+# submit_task_unparameterized_if_no_parameter():
 ```diff
 submit_task_unparameterized_if_no_parameter(instance: Object, method: String, task_tag : String,parameter = null, time_limit : float = task_time_limit, priority:int = default_priority) 
 ```
 like submit_task() but if parameter is equal to null it uses submit_task_unparameterized() instead of submit_task()
 
-load_scene_with_interactive():
+# load_scene_with_interactive():
 ```diff
 load_scene_with_interactive(path, task_tag : String, print_to_console = true ,time_limit : float = task_time_limit, priority:int = 0) 
 ```

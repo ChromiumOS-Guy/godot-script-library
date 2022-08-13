@@ -5,7 +5,7 @@ var loading_scene = null
 onready var tween : Tween = $Tween
 
 func Load(): # trigger this from somewhere
-	loading_scene = ThreadPoolManager.load_scene_with_interactive(scene_file_path)
+	loading_scene = ThreadPoolManager.load_scene_with_interactive(scene_file_path, scene_file_path.get_file())
 
 func _process(delta):
 	if loading_scene != null:

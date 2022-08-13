@@ -20,7 +20,7 @@ get_pending_queue_as_immutable()
 
 get_threads_as_immutable()
 
-normal functions:
+normal functions: - ![#f03c15](https://via.placeholder.com/15/f03c15/f03c15.png) `#f03c15`
 
 join(identifier, by: String = "task") # when called will "block" thread from doing anything until a task is finished or cancelled, use example 1: join(task) , use example 2: join("the_task_tag","task_tag") # will return err when finished err == "OK" is success , err == "OK_CANCEL" is success but task that has been joind got cancelled
 

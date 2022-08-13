@@ -1,4 +1,4 @@
-# # # ThreadPool Features:
+# ThreadPool Features:
 
 task time limit
 

@@ -14,13 +14,15 @@ ThreadPoolManager.gd functions:
 
 debugging functions:
 
-get_task_queue() # gives you access to the task queue in immutable form
+get_task_queue_as_immutable()
 
-get_pending_queue() # gives you access to the pending tasks in immutable form
+get_pending_queue_as_immutable()
 
-get_threads() # gives you access to the ThreadPool's Threads in immutable form
+get_threads_as_immutable()
 
 normal functions:
+
+join(identifier, by: String = "task") # when called will "block" thread from doing anything until a task is finished or cancelled, use example 1: join(task) , use example 2: join("the_task_tag","task_tag")
 
 submit_task(instance: Object, method: String, parameter,task_tag : String ,time_limit : float = task_time_limit, priority:int = default_priority) # submit tasks like normal
 

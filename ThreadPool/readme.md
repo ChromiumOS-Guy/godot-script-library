@@ -38,3 +38,9 @@ submit_task_unparameterized_if_no_parameter(instance: Object, method: String, ta
 
 load_scene_with_interactive(path, task_tag : String, print_to_console = true ,time_limit : float = task_time_limit, priority:int = 0) # uses ResourceLoader.load_interactive() to load your scene async while also updating the task's task.progress and it returns task so you can hook it up to a loading screen , use example: load_scene_with_interactive("path_to_level.tscn","task_tag", false #optional , 10000 # optional, 51 # optional)
 
+```diff
+- text in red
++ text in green
+! text in orange
+# text in gray
+@@ text in purple (and bold)@@

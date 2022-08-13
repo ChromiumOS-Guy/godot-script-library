@@ -25,14 +25,24 @@ func __start_pool():
 func join(identifier, by: String = "task"):
 	return pool.join(identifier, by)
 
-func get_task_queue_as_immutable():
-	return pool.__tasks.duplicate(false)
+func get_task_queue_as_immutable(immutable: bool = true):
+	if immutable:
+		return pool.__tasks.duplicate(false)
+	else:
+		return pool.__tasks
 
-func get_pending_queue_as_immutable():
-	return pool.__pending.duplicate(false)
+func get_pending_queue_as_immutable(immutable: bool = true):
+	if immutable:
+		return pool.__pending.duplicate(false)
+	else:
+		return pool.__pending
 
-func get_threads_as_immutable(): # should only really be used for debugging
-	return pool.__pool.duplicate(false)
+func get_threads_as_immutable(immutable: bool = true): # should only really be used for debugging
+	if immutable:
+		return pool.__pool.duplicate(false)
+	else:
+		print("getting_threads_when_not_immutable_is_a_really_bad_idea")
+		return pool.__pool
 
 func submit_task(instance: Object, method: String, parameter,task_tag : String ,time_limit : float = task_time_limit, priority:int = default_priority):
 	return pool.submit_task(instance, method, parameter,task_tag, time_limit, priority)

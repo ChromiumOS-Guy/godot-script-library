@@ -12,14 +12,20 @@ Futures
 
 ThreadPoolManager.gd functions:
 
-debugging functions:
+# # debugging functions:
 
+# get_task_queue_as_immutable():
+```diff
 get_task_queue_as_immutable()
-
+```
+# get_pending_queue_as_immutable():
+```diff
 get_pending_queue_as_immutable()
-
+```
+# get_threads_as_immutable():
+```diff
 get_threads_as_immutable()
-
+```
 # # normal functions:
 
 # join:

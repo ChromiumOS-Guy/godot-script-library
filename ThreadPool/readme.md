@@ -20,7 +20,7 @@ get_pending_queue_as_immutable()
 
 get_threads_as_immutable()
 
-normal functions:
+# # normal functions:
 
 # join:
 ```diff

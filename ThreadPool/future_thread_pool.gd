@@ -13,6 +13,7 @@ var __pending: Array = []
 var __started = false
 var __finished = false
 var __tasks_lock: Mutex = Mutex.new()
+var __wait_to_join: Mutex = Mutex.new()
 var __tasks_wait: Semaphore = Semaphore.new()
 var __thread_count = 0
 
@@ -29,26 +30,65 @@ func queue_free() -> void: # will shutdown the thread pool
 	.queue_free()
 
 # all submit functions
-func submit_task(instance: Object, method: String, parameter ,task_tag = null, time_limit: float = 0) -> Future:
-	return __enqueue_task(instance, method, parameter, task_tag, false, false, false , time_limit)
+func submit_task(instance: Object, method: String, parameter ,task_tag : String, time_limit: float = 0, priority:int = 100) -> Future:
+	return __enqueue_task(instance, method, parameter, task_tag, false, false, false , time_limit, priority)
 
-func submit_task_as_parameter(instance: Object, method: String, parameter, task_tag = null , time_limit: float = 0) -> Future:
-	return __enqueue_task(instance, method, parameter, task_tag, false, false, true, time_limit)
+func submit_task_as_parameter(instance: Object, method: String, parameter, task_tag : String , time_limit: float = 0, priority:int = 100) -> Future:
+	return __enqueue_task(instance, method, parameter, task_tag, false, false, true, time_limit, priority)
 
-func submit_task_unparameterized(instance: Object, method: String, task_tag = null , time_limit: float = 0) -> Future:
-	return __enqueue_task(instance, method, null,  task_tag, true, false, false, time_limit)
+func submit_task_unparameterized(instance: Object, method: String, task_tag : String , time_limit: float = 0, priority:int = 100) -> Future:
+	return __enqueue_task(instance, method, null,  task_tag, true, false, false, time_limit, priority)
 
-func submit_task_as_only_parameter(instance: Object, method: String,task_tag = null, time_limit: float = 0) -> Future:
-	return __enqueue_task(instance, method, null, task_tag, true, false, true, time_limit)
+func submit_task_as_only_parameter(instance: Object, method: String,task_tag : String, time_limit: float = 0, priority:int = 100) -> Future:
+	return __enqueue_task(instance, method, null, task_tag, true, false, true, time_limit, priority)
 
-func submit_task_array_parameterized(instance: Object, method: String, parameter: Array,task_tag = null, time_limit: float = 0) -> Future:
-	return __enqueue_task(instance, method, parameter,  task_tag, false, true, false, time_limit)
+func submit_task_array_parameterized(instance: Object, method: String, parameter: Array,task_tag : String, time_limit: float = 0, priority:int = 100) -> Future:
+	return __enqueue_task(instance, method, parameter,  task_tag, false, true, false, time_limit, priority)
 
-func submit_task_unparameterized_if_no_parameter(instance: Object, method: String, parameter = null,task_tag = null, time_limit: float = 0) -> Future:
+func submit_task_unparameterized_if_no_parameter(instance: Object, method: String, task_tag : String, parameter = null, time_limit: float = 0, priority:int = 100) -> Future:
 	if parameter == null:
-		return __enqueue_task(instance, method, null, task_tag, true, false, false, time_limit)
+		return __enqueue_task(instance, method, null, task_tag, true, false, false, time_limit, priority)
 	else:
-		return __enqueue_task(instance, method, parameter,task_tag, false, false, false, time_limit)
+		return __enqueue_task(instance, method, parameter,task_tag, false, false, false, time_limit, priority)
+
+# join logic
+func join(identifier, by: String = "task"):
+	__wait_to_join.lock()
+	var err = "OK"
+	if identifier == null:
+		err = "NULL_PARAMETER"
+		print("error on thread (",OS.get_thread_caller_id(),") expected parameter on join function to not be null err code: (",err,")")
+		__wait_to_join.unlock()
+		return err
+	var task
+	if by == "task":
+		task = identifier
+	elif by == "task_tag":
+		var no_tag_duplication
+		for _task_ in __pending:
+			if no_tag_duplication == null:
+				if _task_.tag == identifier:
+					no_tag_duplication = _task_
+			else:
+				if _task_.tag == no_tag_duplication.tag:
+					err = "DUPLICATES"
+					print("error on thread (",OS.get_thread_caller_id(),") the task tag given has one or more duplicates err code: (",err,")")
+					__wait_to_join.unlock()
+					return err
+		task = no_tag_duplication
+		no_tag_duplication = null
+	if task == null:
+		err = "NULL"
+		print("error on thread (",OS.get_thread_caller_id(),") the task given is equal to null err code: (",err,")")
+		__wait_to_join.unlock()
+		return err
+	while (!task.cancelled and !task.finished):
+		OS.delay_msec(10)
+	if task.cancelled:
+		err = "OK_CANCEL"
+	task = null
+	__wait_to_join.unlock()
+	return err
 
 # the shutdown method
 func shutdown():
@@ -69,8 +109,8 @@ func do_nothing(arg) -> void: # fallback if something fails and a task is execut
 	OS.delay_msec(1) # if there is nothing to do, go sleep
 
 # the main task queueing function
-func __enqueue_task(instance: Object, method: String, parameter = null ,task_tag = null, no_argument = false, array_argument = false, task_as_argument = false, time_limit: float = 0) -> Future:
-	var result = Future.new(instance, method, parameter ,task_tag, no_argument, array_argument,task_as_argument, time_limit,self) 
+func __enqueue_task(instance: Object, method: String, parameter = null ,task_tag = null, no_argument = false, array_argument = false, task_as_argument = false, time_limit: float = 0, priority: int = 100) -> Future:
+	var result = Future.new(instance, method, parameter ,task_tag, no_argument, array_argument,task_as_argument, time_limit, priority,self) 
 	if __finished:
 		result.__finish()
 		return result
@@ -131,11 +171,17 @@ func __drain_task() -> Future:
 	__tasks_lock.lock()
 	var result
 	if __tasks.empty():
-		result = Future.new(self, "do_nothing", null,null, true, false,false ,0,self)# normally, this is not expected, but better safe than sorry
+		result = Future.new(self, "do_nothing", null,null, true, false,false ,0,100,self)# normally, this is not expected, but better safe than sorry
 		result.tag = result
 	else:
-		result = __tasks.pop_back()
+		for task in __tasks:
+			if result != null:
+				if task.__priority < result.__priority:
+					result = task
+			else:
+				result = task
 		__pending.append(result)
+		__tasks.remove(__tasks.find(result))
 	__tasks_lock.unlock()
 	return result;
 
@@ -144,6 +190,7 @@ func __execute_tasks(arg_thread) -> void:
 	#print_debug(arg_thread)
 	while not __finished:
 		#print("Thread: (",OS.get_thread_caller_id(),") is wating for a job")
+		OS.delay_msec(10)
 		__tasks_wait.wait()
 		if __finished:
 			return
@@ -154,8 +201,8 @@ func __execute_tasks(arg_thread) -> void:
 func __execute_this_task(task: Future) -> void:
 	#print("Thread: (",OS.get_thread_caller_id(),") is doing job: (",task.tag,")")
 	if task.cancelled:
-		task.__finish()
 		__pending.remove(__pending.find(task))
+		task.__finish()
 		return
 	task.__execute_task()
 	task.completed = true
@@ -203,6 +250,7 @@ class Future: # the Future(task) object (basiclly a task template)
 	var cancelled: bool # true if was requested for this future to avoid being executed
 	var completed: bool # true if this future executed completely
 	var finished: bool # true if this future is considered finished and no further processing will take place
+	var __priority: int
 	var __no_argument: bool
 	var __array_argument: bool
 	var __task_as_argument: bool
@@ -212,7 +260,7 @@ class Future: # the Future(task) object (basiclly a task template)
 	var __pool: FutureThreadPool
 
 	#initialization of a task: Future.new()
-	func _init(instance: Object, method: String, parameter ,task_tag, no_argument: bool, array_argument: bool,task_as_argument: bool ,time_limit: float , pool: FutureThreadPool):
+	func _init(instance: Object, method: String, parameter ,task_tag, no_argument: bool, array_argument: bool,task_as_argument: bool ,time_limit: float, priority:int , pool: FutureThreadPool):
 		target_instance = instance
 		target_method = method
 		target_argument = parameter
@@ -222,6 +270,7 @@ class Future: # the Future(task) object (basiclly a task template)
 		__array_argument = array_argument
 		__task_as_argument = task_as_argument
 		__time_limit = time_limit
+		__priority = priority
 		cancelled = false
 		completed = false
 		finished = false

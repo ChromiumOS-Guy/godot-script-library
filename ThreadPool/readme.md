@@ -10,6 +10,10 @@ variable thread count
 
 Futures
 
+Priority
+
+join
+
 ThreadPoolManager.gd functions:
 
 # # debugging functions:

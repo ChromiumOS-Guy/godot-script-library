@@ -52,7 +52,7 @@ use example 1: join(task)
 use example 2: join("the_task_tag","task_tag")
 
 "the_task_tag" is the the tag name to search for
-"task_tag" is to tell join you want to search by task.tag
+, "task_tag" is to tell join you want to search by task.tag
 
 will return err when finished err == "OK" is success , err == "OK_CANCEL" is success but task that has been joined got cancelled
 

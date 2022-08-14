@@ -53,8 +53,9 @@ submit_task(instance: Object, method: String, parameter,task_tag : String ,time_
 ```
 submit tasks like normal,
 
-use example: submit_task(self, "very_important_function","important_task",10000,0) 
+use example: submit_task(self, "very_important_function",data,"important_task",10000,0) 
 , important_task will be task tag
+, data is the method data to pass to method
 , very_important_function is the method
 , self is the object
 , 100000 is the time limit in milliseconds

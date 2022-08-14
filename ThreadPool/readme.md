@@ -45,7 +45,16 @@ if turned off it will give the thread array in mutable form really really not re
 ```diff
 join(identifier, by: String = "task")
 ```
-when called will "block" the thread from doing anything until a task is finished or cancelled, use example 1: join(task) , use example 2: join("the_task_tag","task_tag") # will return err when finished err == "OK" is success , err == "OK_CANCEL" is success but task that has been joined got cancelled
+when called will "block" the thread from doing anything until a task is finished or cancelled
+
+use example 1: join(task)
+
+use example 2: join("the_task_tag","task_tag")
+
+"the_task_tag" is the the tag name to search for
+"task_tag" is to tell join you want to search by task.tag
+
+will return err when finished err == "OK" is success , err == "OK_CANCEL" is success but task that has been joined got cancelled
 
 # submit_task():
 ```diff
@@ -55,7 +64,7 @@ submit tasks like normal,
 
 use example: submit_task(self, "very_important_function",data,"important_task",10000,0)
 
-, "important_task" will be task.tag
+"important_task" will be task.tag
 , data is the method data to pass to method
 , "very_important_function" is the method name
 , self is the object
@@ -78,7 +87,7 @@ like submit_task() but without any parameters
 
 use example: submit_task(self, "very_important_function","important_task",10000,0)
 
-, "important_task" will be task.tag
+"important_task" will be task.tag
 , "very_important_function" is the method name
 , self is the object
 , 100000 is the time limit in milliseconds
@@ -112,7 +121,7 @@ uses ResourceLoader.load_interactive() to load your scene async while also updat
 
 use example: load_scene_with_interactive("path_to_level.tscn","task_tag", false , 100000 , 0)
 
-, "path_to_level.tscn" is the level path
+"path_to_level.tscn" is the level path
 , "task_tag" is the task.tag
 , false is print_to_console
 , 100000 is the time limit in milliseconds

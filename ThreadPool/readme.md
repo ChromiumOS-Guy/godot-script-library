@@ -36,7 +36,8 @@ if turned off it will give the pending queue in mutable form not recommended
 get_threads_as_immutable(immutable: bool = true)
 ```
 if turned off it will give the thread array in mutable form really really not recommended
-DO NOT USE THIS IF YOU DON'T KNOW WHAT YOUR DOING
+
+(DO NOT USE THIS IF YOU DON'T KNOW WHAT YOUR DOING)
 
 # # normal functions:
 

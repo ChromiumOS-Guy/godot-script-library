@@ -54,12 +54,12 @@ submit_task(instance: Object, method: String, parameter,task_tag : String ,time_
 submit tasks like normal,
 
 use example: submit_task(self, "very_important_function",data,"important_task",10000,0) 
-, important_task will be task tag
+, "important_task" will be task.tag
 , data is the method data to pass to method
-, very_important_function is the method
+, "very_important_function" is the method name
 , self is the object
 , 100000 is the time limit in milliseconds
-, 0 is highest priority
+, 0 is highest priority (theres no limit to lowest priority)
 
 # submit_task_as_parameter():
 ```diff
@@ -75,6 +75,13 @@ submit_task_unparameterized(instance: Object, method: String, task_tag : String,
 ```
 like submit_task() but without any parameters
 
+use example: submit_task(self, "very_important_function","important_task",10000,0) 
+, "important_task" will be task.tag
+, "very_important_function" is the method name
+, self is the object
+, 100000 is the time limit in milliseconds
+, 0 is highest priority (theres no limit to lowest priority)
+
 # submit_task_array_parameterized():
 ```diff
 submit_task_array_parameterized(instance: Object, method: String, parameter: Array,task_tag : String, time_limit : float = task_time_limit, priority:int = default_priority)
@@ -85,7 +92,9 @@ like submit_task() but uses callv () instead of call()
 ```diff
 submit_task_as_only_parameter(instance: Object, method: String ,task_tag : String, time_limit : float = task_time_limit, priority:int = default_priority)
 ```
-like submit_task_unparameterized() but sends task as only parameter example: func said_method(task)
+like submit_task_unparameterized() but sends task as only parameter 
+
+method example: func said_method(task)
 
 # submit_task_unparameterized_if_no_parameter():
 ```diff
@@ -97,4 +106,11 @@ like submit_task() but if parameter is equal to null it uses submit_task_unparam
 ```diff
 load_scene_with_interactive(path, task_tag : String, print_to_console = true ,time_limit : float = task_time_limit, priority:int = 0) 
 ```
-uses ResourceLoader.load_interactive() to load your scene async while also updating the task's task.progress and it returns task so you can hook it up to a loading screen , use example: load_scene_with_interactive("path_to_level.tscn","task_tag", false #optional , 10000 # optional, 51 # optional)
+uses ResourceLoader.load_interactive() to load your scene async while also updating the task's task.progress and it returns task so you can hook it up to a loading screen
+
+use example: load_scene_with_interactive("path_to_level.tscn","task_tag", false , 100000 , 0)
+, "path_to_level.tscn" is the level path
+, "task_tag" is the task.tag
+, false is print_to_console
+, 100000 is the time limit in milliseconds
+, 0 is highest priority (theres no limit to lowest priority)

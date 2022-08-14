@@ -64,7 +64,9 @@ use example: submit_task(self, "very_important_function","important_task",10000,
 ```diff
 submit_task_as_parameter(instance: Object, method: String, parameter,task_tag : String, time_limit : float = task_time_limit, priority:int = default_priority)
 ```
-like submit_task() but gives the selected method the task as self allowing said method to change things about its task example: func said_method(userdata, task)
+like submit_task() but gives the selected method the task as self, allowing said method to change things about its task 
+
+method example: func said_method(userdata, task)
 
 # submit_task_unparameterized():
 ```diff

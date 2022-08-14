@@ -7,7 +7,6 @@ extends Node
 export var max_load_time = 10000
 var thread = Thread.new() # makes new thread
 var can_async:bool = ["Windows", "OSX", "UWP", "X11"].has(OS.get_name())
-var autoload_names:Array = ["SceneChanger"]
 
 func start_load(path): # example use: SceneChanger.start_load("res://levels/level1.tscn",self)
 	if can_async:

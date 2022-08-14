@@ -53,7 +53,8 @@ submit_task(instance: Object, method: String, parameter,task_tag : String ,time_
 ```
 submit tasks like normal,
 
-use example: submit_task(self, "very_important_function",data,"important_task",10000,0) 
+use example: submit_task(self, "very_important_function",data,"important_task",10000,0)
+
 , "important_task" will be task.tag
 , data is the method data to pass to method
 , "very_important_function" is the method name
@@ -75,7 +76,8 @@ submit_task_unparameterized(instance: Object, method: String, task_tag : String,
 ```
 like submit_task() but without any parameters
 
-use example: submit_task(self, "very_important_function","important_task",10000,0) 
+use example: submit_task(self, "very_important_function","important_task",10000,0)
+
 , "important_task" will be task.tag
 , "very_important_function" is the method name
 , self is the object
@@ -109,6 +111,7 @@ load_scene_with_interactive(path, task_tag : String, print_to_console = true ,ti
 uses ResourceLoader.load_interactive() to load your scene async while also updating the task's task.progress and it returns task so you can hook it up to a loading screen
 
 use example: load_scene_with_interactive("path_to_level.tscn","task_tag", false , 100000 , 0)
+
 , "path_to_level.tscn" is the level path
 , "task_tag" is the task.tag
 , false is print_to_console

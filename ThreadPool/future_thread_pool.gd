@@ -13,7 +13,6 @@ var __pending: Array = []
 var __started = false
 var __finished = false
 var __tasks_lock: Mutex = Mutex.new()
-var __wait_to_join: Mutex = Mutex.new()
 var __tasks_wait: Semaphore = Semaphore.new()
 var __thread_count = 0
 
@@ -53,12 +52,10 @@ func submit_task_unparameterized_if_no_parameter(instance: Object, method: Strin
 
 # join logic
 func join(identifier, by: String = "task"):
-	__wait_to_join.lock()
 	var err = "OK"
 	if identifier == null:
 		err = "NULL_PARAMETER"
 		print("error on thread (",OS.get_thread_caller_id(),") expected parameter on join function to not be null err code: (",err,")")
-		__wait_to_join.unlock()
 		return err
 	var task
 	if by == "task":
@@ -73,21 +70,18 @@ func join(identifier, by: String = "task"):
 				if _task_.tag == no_tag_duplication.tag:
 					err = "DUPLICATES"
 					print("error on thread (",OS.get_thread_caller_id(),") the task tag given has one or more duplicates err code: (",err,")")
-					__wait_to_join.unlock()
 					return err
 		task = no_tag_duplication
 		no_tag_duplication = null
 	if task == null:
 		err = "NULL"
 		print("error on thread (",OS.get_thread_caller_id(),") the task given is equal to null err code: (",err,")")
-		__wait_to_join.unlock()
 		return err
 	while (!task.cancelled and !task.finished):
 		OS.delay_msec(10)
 	if task.cancelled:
 		err = "OK_CANCEL"
 	task = null
-	__wait_to_join.unlock()
 	return err
 
 # the shutdown method

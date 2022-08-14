@@ -32,10 +32,16 @@ func goto_scene(data): # handels polling and scene switching
 			var err = loader.poll()
 			if err == ERR_FILE_EOF:
 				#Loading Complete
+				var autoload_prop_start = "autoload/"
+				var singletons: = []
+				for i in ProjectSettings.get_property_list(): # magic i copy pasted this from here https://github.com/godotengine/godot-proposals/issues/3705
+					if i.name.begins_with(autoload_prop_start):
+						singletons.push_back(i.name.trim_prefix(autoload_prop_start))
 				var resource = loader.get_resource().instance()
+				task.progress = 100
 				get_tree().get_root().add_child_below_node(get_tree().get_root(),resource)
 				for child in get_tree().get_root().get_children(): # gets children of root and queue_free() them if they are not a singleton
-					if autoload_names.has(child.get_name()): # checks if the childs name is valid for exclusion from queue_free() by looking up its name and seeing if it exist in Globals.autoload_names
+					if singletons.has(child.get_name()): # checks if the childs name is valid for exclusion from queue_free() by looking up its name and seeing if it exist in Globals.autoload_names
 						pass
 					elif child == resource:
 						pass

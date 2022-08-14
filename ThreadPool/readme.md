@@ -13,7 +13,7 @@ Futures
 
 Priority
 
-join
+join (suspected to not work with multiple threads at the same time)
 
 ThreadPoolManager.gd functions:
 

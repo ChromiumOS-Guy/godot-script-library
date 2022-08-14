@@ -5,3 +5,7 @@ this  library of Godot scripts will grow over time this is for myself as well as
 
 
 also if you have suggestions or possible fixes to bugs don't hesitate to contact me via the Discussions I'll do my best to answer them all
+
+
+if your looking for my thread pool I made it its own repo:
+https://github.com/ChromiumOS-Guy/ThreadPoolPlusPlus

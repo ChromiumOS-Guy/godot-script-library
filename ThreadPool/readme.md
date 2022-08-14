@@ -41,7 +41,7 @@ if turned off it will give the thread array in mutable form really really not re
 
 # # normal functions:
 
-# join:
+# join():
 ```diff
 join(identifier, by: String = "task")
 ```
